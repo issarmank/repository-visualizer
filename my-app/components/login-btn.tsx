@@ -5,10 +5,6 @@ import { useSession, signIn, signOut } from "next-auth/react"
 export default function LoginButton() {
   const { data: session } = useSession()
 
-//   if (status === "loading") {
-//     return <div>Loading...</div>
-//   }
-
   if (session?.user) {
     return (
       <div className="flex flex-col items-center gap-4">
