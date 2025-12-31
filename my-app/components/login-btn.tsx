@@ -8,42 +8,44 @@ export default function LoginButton() {
 
   return (
     <div className="auth-container h-screen text-black">
-      <nav className="mx-auto mt-4 w-fit flex justify-between items-center p-4">
-        <div className="flex items-center justify-center gap-10">
-          {session && (
-            <>
+      <header className="h-[72px] flex items-center justify-center">
+        {session && (
+          <nav className="w-fit rounded-2xl">
+            <div className="flex items-center justify-center gap-10">
               <Link href="/repos" className="font-comic hover:text-blue-600 font-bold">
                 Your Repositories
               </Link>
               <Link href="/visualize" className="font-comic hover:text-blue-600 font-bold">
                 Visualize
               </Link>
-            </>
-          )}
-        </div>
-      </nav>
+            </div>
+          </nav>
+        )}
+      </header>
 
-      <h1 className="text-center text-2xl transform translate-y-24 font-comic font-bold">
-        Welcome to the 3D Repository Visualizer
-      </h1>
+      <main className="flex flex-col items-center justify-center text-center px-6 py-24">
+        <h1 className="text-4xl font-comic font-bold">3D Repository Visualizer</h1>
 
-      {session ? (
-        <div className="signed-in text-center transform translate-y-36">
-          <p>
-            Signed in as <strong>{session.user?.email ?? session.user?.name ?? "GitHub user"}</strong>
-          </p>
-          <button className="sign-out-btn font-comic mt-4" onClick={() => signOut({ callbackUrl: "/" })}>
-            Sign out
-          </button>
+        <p className="mt-4 font-comic text-lg max-w-2xl">
+          A 3D visualization tool to explore and understand your GitHub repositories.
+        </p>
+
+        <button
+          className="mt-8 font-comic font-bold text-white rounded-2xl border-4 border-purple-950 bg-purple-950 px-8 py-3 transition-colors hover:border-purple-700 hover:bg-purple-700"
+          onClick={() => {
+            if (session) return signOut({ callbackUrl: "/" });
+            return signIn("github", { callbackUrl: "/" });
+          }}
+        >
+          {session ? "Sign Out" : "Sign In"}
+        </button>
+
+        <div className="mt-6 min-h-[24px] font-comic">
+          {session ? (
+            <p>Signed in as <strong>{session.user?.email ?? session.user?.name ?? "GitHub user"}</strong></p>
+          ) : null}
         </div>
-      ) : (
-        <div className="not-signed-in text-center transform translate-y-52">
-          <button className="sign-in-btn font-comic" onClick={() => signIn("github", { callbackUrl: "/repos" })}>
-            Sign in with GitHub
-          </button>
-          <h1 className="font-comic text-center text-lg mt-5">Created By Issar Manknojiya</h1>
-        </div>
-      )}
+      </main>
     </div>
   );
 }

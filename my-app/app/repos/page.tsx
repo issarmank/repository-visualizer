@@ -49,8 +49,8 @@ export default function ReposPage() {
   }
 
   return (
-    <main className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold">Your repositories</h1>
+    <main className="p-6 max-w-4xl mx-auto text-black">
+      <h1 className="text-2xl font-semibold">Your Repositories</h1>
 
       {error && <p className="mt-4 text-red-600">{error}</p>}
       {!repos && !error && <p className="mt-4">Loading repos…</p>}
@@ -58,16 +58,23 @@ export default function ReposPage() {
       {repos && (
         <ul className="mt-6 space-y-3">
           {repos.map((r) => (
-            <li key={r.id} className="border rounded p-3 flex items-center justify-between">
-              <div>
-                <a className="font-medium hover:underline" href={r.html_url} target="_blank" rel="noreferrer">
-                  {r.full_name}
-                </a>
-                <div className="text-sm text-neutral-600">
-                  {r.private ? "Private" : "Public"} • Updated {new Date(r.updated_at).toLocaleString()}
-                </div>
-              </div>
-              <span className="text-sm text-neutral-500">{r.name}</span>
+            <li
+              key={r.id}
+              className="border rounded p-3 flex items-center justify-between"
+            >
+              <a
+                className="text-sm font-semibold hover:underline"
+                href={r.html_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {r.name}
+              </a>
+
+              <span className="text-sm">
+                {r.private ? "Private" : "Public"} • Updated{" "}
+                {new Date(r.updated_at).toLocaleString()}
+              </span>
             </li>
           ))}
         </ul>
