@@ -1,5 +1,4 @@
 import React from 'react';
-import LoginButton from '../components/login-btn';
 import HomeContent from '../components/login-btn';
 
 export default function Home() {
