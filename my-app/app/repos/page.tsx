@@ -58,23 +58,31 @@ export default function ReposPage() {
       {repos && (
         <ul className="mt-6 space-y-3">
           {repos.map((r) => (
-            <li
-              key={r.id}
-              className="border rounded p-3 flex items-center justify-between"
-            >
-              <a
-                className="text-sm font-semibold hover:underline"
-                href={r.html_url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {r.name}
-              </a>
+            <li key={r.id} className="border rounded p-3 flex items-center justify-between">
+              <div>
+                <div className="font-semibold">{r.name}</div>
+                <div className="text-sm text-gray-500">{r.full_name}</div>
+              </div>
 
-              <span className="text-sm">
-                {r.private ? "Private" : "Public"} • Updated{" "}
-                {new Date(r.updated_at).toLocaleString()}
-              </span>
+              <div className="flex gap-2">
+                {/* Link to external GitHub */}
+                <a
+                  href={r.html_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1 bg-black text-white text-sm rounded hover:bg-blue-700"
+                >
+                  GitHub Repo
+                </a>
+
+                {/* Link to your Visualizer */}
+                <a
+                  href={`/visualize/${r.full_name}`} // full_name is usually "owner/repo"
+                  className="px-3 py-1 bg-purple-800 text-white text-sm rounded hover:bg-blue-700"
+                >
+                  Visualize
+                </a>
+              </div>
             </li>
           ))}
         </ul>
