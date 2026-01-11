@@ -34,6 +34,18 @@ function getFileColor(filename: string) {
   return "#888888"; // Grey default
 }
 
+function LegendItem({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="inline-block h-3 w-3 rounded-sm border border-white/30"
+        style={{ backgroundColor: color }}
+      />
+      <span className="text-sm">{label}</span>
+    </div>
+  );
+}
+
 export default function VisualizerScene({ owner, repo }: Props) {
   const [buildings, setBuildings] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,8 +78,6 @@ export default function VisualizerScene({ owner, repo }: Props) {
         }
 
         const hierarchy: FileNode = buildHierarchy(flatFiles);
-
-        // generateCityLayout returns FileNode[] (with x/z/width/depth/y filled for blobs)
         const nextBuildings = generateCityLayout(hierarchy);
 
         if (!cancelled) setBuildings(nextBuildings);
@@ -89,7 +99,6 @@ export default function VisualizerScene({ owner, repo }: Props) {
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
 
-        {/* Render buildings (files only) */}
         {buildings.map((b) => (
           <mesh key={b.path} position={[b.x ?? 0, (b.y ?? 1) / 2, b.z ?? 0]}>
             <boxGeometry args={[b.width ?? 1, b.y ?? 1, b.depth ?? 1]} />
@@ -100,10 +109,26 @@ export default function VisualizerScene({ owner, repo }: Props) {
         <OrbitControls />
       </Canvas>
 
+      {/* Repo + stats */}
       <div className="absolute bottom-4 right-4 bg-black/60 p-3 text-white rounded">
         <div className="font-semibold">{label}</div>
         <div className="text-sm">
           {loading ? "Loading repo tree…" : error ? `Error: ${error}` : `Buildings: ${buildings.length}`}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="absolute bottom-4 left-4 bg-black/60 p-3 text-white rounded w-56">
+        <div className="font-semibold mb-2">Legend</div>
+        <div className="space-y-1">
+          <LegendItem color="#3178c6" label="TypeScript (.ts / .tsx)" />
+          <LegendItem color="#f7df1e" label="JavaScript (.js)" />
+          <LegendItem color="#264de4" label="CSS (.css)" />
+          <LegendItem color="#ff0000" label="JSON (.json)" />
+          <LegendItem color="#888888" label="Other file types" />
+        </div>
+        <div className="mt-2 text-xs text-white/80">
+          Height ≈ file size (scaled)
         </div>
       </div>
     </div>
