@@ -18,6 +18,14 @@ type GitHubTreeItem = {
   size?: number;
 };
 
+type GitHubTreeResponse = GitHubTreeItem[] | { tree: GitHubTreeItem[] };
+
+function extractFlatFiles(payload: GitHubTreeResponse): GitHubTreeItem[] {
+  if (Array.isArray(payload)) return payload;
+  if (payload && Array.isArray(payload.tree)) return payload.tree;
+  return [];
+}
+
 function getFileColor(filename: string) {
   if (filename.endsWith(".ts") || filename.endsWith(".tsx")) return "#3178c6"; // TypeScript Blue
   if (filename.endsWith(".js")) return "#f7df1e"; // JS Yellow
@@ -50,7 +58,13 @@ export default function VisualizerScene({ owner, repo }: Props) {
           throw new Error(text || `Failed to fetch tree (${res.status})`);
         }
 
-        const flatFiles = (await res.json()) as GitHubTreeItem[];
+        const payload = (await res.json()) as GitHubTreeResponse;
+        const flatFiles = extractFlatFiles(payload);
+
+        if (flatFiles.length === 0) {
+          throw new Error("GitHub tree payload was not an array (expected [] or { tree: [] }).");
+        }
+
         const hierarchy: FileNode = buildHierarchy(flatFiles);
 
         // generateCityLayout returns FileNode[] (with x/z/width/depth/y filled for blobs)
