@@ -27,27 +27,16 @@ function extractFlatFiles(payload: GitHubTreeResponse): GitHubTreeItem[] {
 }
 
 function getFileColor(filename: string) {
-  if (filename.endsWith(".ts") || filename.endsWith(".tsx")) return "#3178c6"; // TypeScript Blue
-  if (filename.endsWith(".js")) return "#f7df1e"; // JS Yellow
-  if (filename.endsWith(".css")) return "#264de4"; // CSS Blue
-  if (filename.endsWith(".json")) return "#ff0000"; // JSON Red
-  return "#888888"; // Grey default
-}
-
-function LegendItem({ color, label }: { color: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className="inline-block h-3 w-3 rounded-sm border border-white/30"
-        style={{ backgroundColor: color }}
-      />
-      <span className="text-sm">{label}</span>
-    </div>
-  );
+  if (filename.endsWith(".ts") || filename.endsWith(".tsx")) return "#3178c6";
+  if (filename.endsWith(".js")) return "#f7df1e";
+  if (filename.endsWith(".css")) return "#264de4";
+  if (filename.endsWith(".json")) return "#ff0000";
+  return "#888888";
 }
 
 export default function VisualizerScene({ owner, repo }: Props) {
   const [buildings, setBuildings] = useState<FileNode[]>([]);
+  const [selected, setSelected] = useState<FileNode | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,10 +66,13 @@ export default function VisualizerScene({ owner, repo }: Props) {
           throw new Error("GitHub tree payload was not an array (expected [] or { tree: [] }).");
         }
 
-        const hierarchy: FileNode = buildHierarchy(flatFiles);
+        const hierarchy = buildHierarchy(flatFiles);
         const nextBuildings = generateCityLayout(hierarchy);
 
-        if (!cancelled) setBuildings(nextBuildings);
+        if (!cancelled) {
+          setBuildings(nextBuildings);
+          setSelected(null);
+        }
       } catch (e: unknown) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Unknown error");
       } finally {
@@ -95,16 +87,36 @@ export default function VisualizerScene({ owner, repo }: Props) {
 
   return (
     <div className="relative h-full w-full">
-      <Canvas camera={{ position: [12, 12, 12], fov: 50 }}>
+      <Canvas
+        camera={{ position: [12, 12, 12], fov: 50 }}
+        onPointerMissed={() => setSelected(null)} // click empty space to clear
+      >
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
 
-        {buildings.map((b) => (
-          <mesh key={b.path} position={[b.x ?? 0, (b.y ?? 1) / 2, b.z ?? 0]}>
-            <boxGeometry args={[b.width ?? 1, b.y ?? 1, b.depth ?? 1]} />
-            <meshStandardMaterial color={getFileColor(b.name)} />
-          </mesh>
-        ))}
+        {buildings.map((b) => {
+          const h = Math.max(0.2, b.y ?? 1);
+          const w = Math.max(0.5, b.width ?? 1);
+          const d = Math.max(0.5, b.depth ?? 1);
+          const x = b.x ?? 0;
+          const z = b.z ?? 0;
+
+          const isSelected = selected?.path === b.path;
+
+          return (
+            <mesh
+              key={b.path}
+              position={[x, h / 2, z]}
+              onPointerDown={(e) => {
+                e.stopPropagation(); // prevents "missed" from firing
+                setSelected(b);
+              }}
+            >
+              <boxGeometry args={[w, h, d]} />
+              <meshStandardMaterial color={getFileColor(b.name)} emissive={isSelected ? "#ffffff" : "#000000"} emissiveIntensity={isSelected ? 0.15 : 0} />
+            </mesh>
+          );
+        })}
 
         <OrbitControls />
       </Canvas>
@@ -117,19 +129,24 @@ export default function VisualizerScene({ owner, repo }: Props) {
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-black/60 p-3 text-white rounded w-56">
-        <div className="font-semibold mb-2">Legend</div>
-        <div className="space-y-1">
-          <LegendItem color="#3178c6" label="TypeScript (.ts / .tsx)" />
-          <LegendItem color="#f7df1e" label="JavaScript (.js)" />
-          <LegendItem color="#264de4" label="CSS (.css)" />
-          <LegendItem color="#ff0000" label="JSON (.json)" />
-          <LegendItem color="#888888" label="Other file types" />
-        </div>
-        <div className="mt-2 text-xs text-white/80">
-          Height ≈ file size (scaled)
-        </div>
+      {/* Selected file info */}
+      <div className="absolute top-4 right-4 bg-black/60 p-3 text-white rounded w-80">
+        <div className="font-semibold">Selection</div>
+        {selected ? (
+          <div className="mt-2 text-sm space-y-1">
+            <div>
+              <span className="text-white/70">Name:</span> {selected.name}
+            </div>
+            <div>
+              <span className="text-white/70">Type:</span> {selected.type === "blob" ? "File" : "Folder"}
+            </div>
+            <div className="break-all">
+              <span className="text-white/70">Path:</span> {selected.path}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-2 text-sm text-white/70">Click a building to see details.</div>
+        )}
       </div>
     </div>
   );
