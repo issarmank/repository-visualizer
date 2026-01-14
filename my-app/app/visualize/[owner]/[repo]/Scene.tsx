@@ -27,11 +27,45 @@ function extractFlatFiles(payload: GitHubTreeResponse): GitHubTreeItem[] {
 }
 
 function getFileColor(filename: string) {
-  if (filename.endsWith(".ts") || filename.endsWith(".tsx")) return "#3178c6";
-  if (filename.endsWith(".js")) return "#f7df1e";
-  if (filename.endsWith(".css")) return "#264de4";
-  if (filename.endsWith(".json")) return "#ff0000";
-  return "#888888";
+  const lower = filename.toLowerCase();
+  if (lower.endsWith(".ts") || lower.endsWith(".tsx")) return "#3178c6"; // TypeScript
+  if (lower.endsWith(".js") || lower.endsWith(".jsx")) return "#f7df1e"; // JavaScript
+  if (lower.endsWith(".css") || lower.endsWith(".scss") || lower.endsWith(".sass") || lower.endsWith(".less"))
+    return "#264de4"; // Styles
+  if (lower.endsWith(".json")) return "#ff0000"; // JSON
+  if (lower.endsWith(".md") || lower.endsWith(".mdx")) return "#6b7280"; // Markdown
+  if (lower.endsWith(".html") || lower.endsWith(".htm")) return "#e34f26"; // HTML
+  if (lower.endsWith(".yml") || lower.endsWith(".yaml")) return "#0ea5e9"; // YAML
+  if (lower.endsWith(".py")) return "#3776ab"; // Python
+  if (lower.endsWith(".go")) return "#00add8"; // Go
+  if (lower.endsWith(".java")) return "#e11d48"; // Java
+  if (lower.endsWith(".kt") || lower.endsWith(".kts")) return "#7c3aed"; // Kotlin
+  if (lower.endsWith(".c") || lower.endsWith(".h")) return "#a8b9cc"; // C
+  if (lower.endsWith(".cpp") || lower.endsWith(".cc") || lower.endsWith(".cxx") || lower.endsWith(".hpp"))
+    return "#00599c"; // C++
+  if (lower.endsWith(".rs")) return "#dea584"; // Rust
+  if (lower.endsWith(".php")) return "#777bb4"; // PHP
+  if (lower.endsWith(".rb")) return "#cc342d"; // Ruby
+  if (lower.endsWith(".swift")) return "#f05138"; // Swift
+  if (lower.endsWith(".sh") || lower.endsWith(".bash") || lower.endsWith(".zsh")) return "#22c55e"; // Shell
+  if (lower.endsWith(".dockerfile") || lower === "dockerfile") return "#0db7ed"; // Dockerfile
+  if (lower.endsWith(".xml")) return "#f97316"; // XML
+  if (lower.endsWith(".sql")) return "#a855f7"; // SQL
+  if (lower.endsWith(".toml")) return "#111827"; // TOML
+  if (lower.endsWith(".ini") || lower.endsWith(".env")) return "#10b981"; // Config
+  return "#888888"; // Other
+}
+
+function LegendItem({ color, label }: { color: string; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="inline-block h-3 w-3 rounded-sm border border-white/30"
+        style={{ backgroundColor: color }}
+      />
+      <span className="text-sm">{label}</span>
+    </div>
+  );
 }
 
 export default function VisualizerScene({ owner, repo }: Props) {
@@ -89,7 +123,7 @@ export default function VisualizerScene({ owner, repo }: Props) {
     <div className="relative h-full w-full">
       <Canvas
         camera={{ position: [12, 12, 12], fov: 50 }}
-        onPointerMissed={() => setSelected(null)} // click empty space to clear
+        onPointerMissed={() => setSelected(null)}
       >
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
@@ -108,18 +142,54 @@ export default function VisualizerScene({ owner, repo }: Props) {
               key={b.path}
               position={[x, h / 2, z]}
               onPointerDown={(e) => {
-                e.stopPropagation(); // prevents "missed" from firing
+                e.stopPropagation();
                 setSelected(b);
               }}
             >
               <boxGeometry args={[w, h, d]} />
-              <meshStandardMaterial color={getFileColor(b.name)} emissive={isSelected ? "#ffffff" : "#000000"} emissiveIntensity={isSelected ? 0.15 : 0} />
+              <meshStandardMaterial
+                color={getFileColor(b.name)}
+                emissive={isSelected ? "#ffffff" : "#000000"}
+                emissiveIntensity={isSelected ? 0.15 : 0}
+              />
             </mesh>
           );
         })}
 
         <OrbitControls />
       </Canvas>
+
+      {/* Legend (bottom-left) */}
+      <div className="absolute bottom-4 left-4 bg-black/60 p-3 text-white rounded w-72 max-h-[50vh] overflow-auto">
+        <div className="font-semibold mb-2">Legend</div>
+        <div className="space-y-1">
+          <LegendItem color="#3178c6" label="TypeScript (.ts, .tsx)" />
+          <LegendItem color="#f7df1e" label="JavaScript (.js, .jsx)" />
+          <LegendItem color="#264de4" label="Styles (.css, .scss, .sass, .less)" />
+          <LegendItem color="#ff0000" label="JSON (.json)" />
+          <LegendItem color="#6b7280" label="Markdown (.md, .mdx)" />
+          <LegendItem color="#e34f26" label="HTML (.html, .htm)" />
+          <LegendItem color="#0ea5e9" label="YAML (.yml, .yaml)" />
+          <LegendItem color="#3776ab" label="Python (.py)" />
+          <LegendItem color="#00add8" label="Go (.go)" />
+          <LegendItem color="#e11d48" label="Java (.java)" />
+          <LegendItem color="#7c3aed" label="Kotlin (.kt, .kts)" />
+          <LegendItem color="#a8b9cc" label="C (.c, .h)" />
+          <LegendItem color="#00599c" label="C++ (.cpp, .hpp, .cc, .cxx)" />
+          <LegendItem color="#dea584" label="Rust (.rs)" />
+          <LegendItem color="#777bb4" label="PHP (.php)" />
+          <LegendItem color="#cc342d" label="Ruby (.rb)" />
+          <LegendItem color="#f05138" label="Swift (.swift)" />
+          <LegendItem color="#22c55e" label="Shell (.sh, .bash, .zsh)" />
+          <LegendItem color="#0db7ed" label="Docker (Dockerfile)" />
+          <LegendItem color="#f97316" label="XML (.xml)" />
+          <LegendItem color="#a855f7" label="SQL (.sql)" />
+          <LegendItem color="#111827" label="TOML (.toml)" />
+          <LegendItem color="#10b981" label="Config (.env, .ini)" />
+          <LegendItem color="#888888" label="Other" />
+        </div>
+        <div className="mt-2 text-xs text-white/80">Height ≈ file size (scaled)</div>
+      </div>
 
       {/* Repo + stats */}
       <div className="absolute bottom-4 right-4 bg-black/60 p-3 text-white rounded">
