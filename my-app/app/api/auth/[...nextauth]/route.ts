@@ -1,18 +1,18 @@
-import NextAuth, { NextAuthOptions } from "next-auth"
-import GithubProvider from "next-auth/providers/github"
-import type { JWT } from "next-auth/jwt"
-import type { Session } from "next-auth"
+import NextAuth, { type NextAuthOptions } from "next-auth";
+import GithubProvider from "next-auth/providers/github";
+import type { JWT } from "next-auth/jwt";
+import type { Session } from "next-auth";
 
 // Augment NextAuth types so accessToken is known everywhere
 declare module "next-auth" {
   interface Session {
-    accessToken?: string
+    accessToken?: string;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    accessToken?: string
+    accessToken?: string;
   }
 }
 
@@ -30,16 +30,16 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, account }): Promise<JWT> {
-      if (account?.access_token) {
-        token.accessToken = account.access_token
-      }
-      return token
+      if (account?.access_token) token.accessToken = account.access_token;
+      return token;
     },
     async session({ session, token }): Promise<Session> {
-      session.accessToken = token.accessToken
-      return session
+      session.accessToken = token.accessToken;
+      return session;
     },
   },
-}
+};
 
-export default NextAuth(authOptions)
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

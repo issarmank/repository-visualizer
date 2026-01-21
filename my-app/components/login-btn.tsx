@@ -12,11 +12,11 @@ export default function LoginButton() {
         {session && (
           <nav className="w-fit rounded-2xl">
             <div className="flex items-center justify-center gap-10">
+              <Link href="/" className="font-comic hover:text-blue-600 font-bold">
+                Home
+              </Link>
               <Link href="/repos" className="font-comic hover:text-blue-600 font-bold">
                 Your Repositories
-              </Link>
-              <Link href="/visualize" className="font-comic hover:text-blue-600 font-bold">
-                Visualize
               </Link>
             </div>
           </nav>
