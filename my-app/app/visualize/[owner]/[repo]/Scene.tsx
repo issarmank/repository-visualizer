@@ -56,16 +56,94 @@ function getFileColor(filename: string) {
   return "#888888"; // Other
 }
 
-function LegendItem({ color, label }: { color: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className="inline-block h-3 w-3 rounded-sm border border-white/30"
-        style={{ backgroundColor: color }}
-      />
-      <span className="text-sm">{label}</span>
-    </div>
-  );
+function getLanguageFromFilename(filename: string): string {
+  const lower = filename.toLowerCase();
+
+  // handle special filenames first
+  if (lower === "dockerfile" || lower.endsWith(".dockerfile")) return "Docker";
+  if (lower === "makefile") return "Make";
+  if (lower === "cmakelists.txt") return "CMake";
+
+  const ext = getExtension(lower);
+
+  switch (ext) {
+    case "ts":
+    case "tsx":
+      return "TypeScript";
+    case "js":
+    case "jsx":
+      return "JavaScript";
+    case "css":
+    case "scss":
+    case "sass":
+    case "less":
+      return "CSS / Styles";
+    case "json":
+      return "JSON";
+    case "md":
+    case "mdx":
+      return "Markdown";
+    case "html":
+    case "htm":
+      return "HTML";
+    case "yml":
+    case "yaml":
+      return "YAML";
+    case "py":
+      return "Python";
+    case "go":
+      return "Go";
+    case "java":
+      return "Java";
+    case "kt":
+    case "kts":
+      return "Kotlin";
+    case "c":
+    case "h":
+      return "C";
+    case "cpp":
+    case "cc":
+    case "cxx":
+    case "hpp":
+      return "C++";
+    case "rs":
+      return "Rust";
+    case "php":
+      return "PHP";
+    case "rb":
+      return "Ruby";
+    case "swift":
+      return "Swift";
+    case "sh":
+    case "bash":
+    case "zsh":
+      return "Shell";
+    case "xml":
+      return "XML";
+    case "sql":
+      return "SQL";
+    case "toml":
+      return "TOML";
+    case "env":
+    case "ini":
+      return "Config";
+    default:
+      return "Unknown";
+  }
+}
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const value = bytes / Math.pow(1024, i);
+  return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+function getExtension(name: string): string {
+  const idx = name.lastIndexOf(".");
+  if (idx <= 0 || idx === name.length - 1) return "(none)";
+  return name.slice(idx + 1).toLowerCase();
 }
 
 export default function VisualizerScene({ owner, repo }: Props) {
@@ -159,38 +237,6 @@ export default function VisualizerScene({ owner, repo }: Props) {
         <OrbitControls />
       </Canvas>
 
-      {/* Legend (bottom-left) */}
-      <div className="absolute bottom-4 left-4 bg-black/60 p-3 text-white rounded w-72 max-h-[50vh] overflow-auto">
-        <div className="font-semibold mb-2">Legend</div>
-        <div className="space-y-1">
-          <LegendItem color="#3178c6" label="TypeScript (.ts, .tsx)" />
-          <LegendItem color="#f7df1e" label="JavaScript (.js, .jsx)" />
-          <LegendItem color="#264de4" label="Styles (.css, .scss, .sass, .less)" />
-          <LegendItem color="#ff0000" label="JSON (.json)" />
-          <LegendItem color="#6b7280" label="Markdown (.md, .mdx)" />
-          <LegendItem color="#e34f26" label="HTML (.html, .htm)" />
-          <LegendItem color="#0ea5e9" label="YAML (.yml, .yaml)" />
-          <LegendItem color="#3776ab" label="Python (.py)" />
-          <LegendItem color="#00add8" label="Go (.go)" />
-          <LegendItem color="#e11d48" label="Java (.java)" />
-          <LegendItem color="#7c3aed" label="Kotlin (.kt, .kts)" />
-          <LegendItem color="#a8b9cc" label="C (.c, .h)" />
-          <LegendItem color="#00599c" label="C++ (.cpp, .hpp, .cc, .cxx)" />
-          <LegendItem color="#dea584" label="Rust (.rs)" />
-          <LegendItem color="#777bb4" label="PHP (.php)" />
-          <LegendItem color="#cc342d" label="Ruby (.rb)" />
-          <LegendItem color="#f05138" label="Swift (.swift)" />
-          <LegendItem color="#22c55e" label="Shell (.sh, .bash, .zsh)" />
-          <LegendItem color="#0db7ed" label="Docker (Dockerfile)" />
-          <LegendItem color="#f97316" label="XML (.xml)" />
-          <LegendItem color="#a855f7" label="SQL (.sql)" />
-          <LegendItem color="#111827" label="TOML (.toml)" />
-          <LegendItem color="#10b981" label="Config (.env, .ini)" />
-          <LegendItem color="#888888" label="Other" />
-        </div>
-        <div className="mt-2 text-xs text-white/80">Height ≈ file size (scaled)</div>
-      </div>
-
       {/* Repo + stats */}
       <div className="absolute bottom-4 right-4 bg-black/60 p-3 text-white rounded">
         <div className="font-semibold">{label}</div>
@@ -199,23 +245,55 @@ export default function VisualizerScene({ owner, repo }: Props) {
         </div>
       </div>
 
-      {/* Selected file info */}
-      <div className="absolute top-4 right-4 bg-black/60 p-3 text-white rounded w-80">
-        <div className="font-semibold">Selection</div>
-        {selected ? (
+      {/* Clicked file details (replaces legend) */}
+      <div className="absolute bottom-4 left-4 bg-black/60 p-3 text-white rounded w-80">
+        <div className="flex items-center justify-between">
+          <div className="font-semibold">File details</div>
+          {selected ? (
+            <button
+              className="text-xs text-white/80 hover:text-white underline"
+              onClick={() => setSelected(null)}
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
+
+        {!selected ? (
+          <div className="mt-2 text-sm text-white/70">Click a building to see its details.</div>
+        ) : (
           <div className="mt-2 text-sm space-y-1">
+            <div>
+              <span className="text-white/70">Language:</span> {getLanguageFromFilename(selected.name)}
+            </div>
+            <div className="break-all">
+              <span className="text-white/70">Path:</span> {selected.path}
+            </div>
             <div>
               <span className="text-white/70">Name:</span> {selected.name}
             </div>
             <div>
               <span className="text-white/70">Type:</span> {selected.type === "blob" ? "File" : "Folder"}
             </div>
-            <div className="break-all">
-              <span className="text-white/70">Path:</span> {selected.path}
+            <div>
+              <span className="text-white/70">Extension:</span> {getExtension(selected.name)}
+            </div>
+            <div>
+              <span className="text-white/70">GitHub size:</span>{" "}
+              {formatBytes(selected.size)}
+            </div>
+            <div>
+              <span className="text-white/70">Building height:</span> {(selected.y ?? 0).toFixed(2)}
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-white/70">Color:</span>
+              <span
+                className="inline-block h-3 w-3 rounded-sm border border-white/30"
+                style={{ backgroundColor: getFileColor(selected.name) }}
+              />
+              <span className="text-xs text-white/70">{getFileColor(selected.name)}</span>
             </div>
           </div>
-        ) : (
-          <div className="mt-2 text-sm text-white/70">Click a building to see details.</div>
         )}
       </div>
     </div>
